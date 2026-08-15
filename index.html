@@ -1,0 +1,64 @@
+<script>
+    // ============================================================
+    // 1. KONFIGURASI GOOGLE SHEETS
+    // ============================================================
+    const GOOGLE_SHEET_ID = '1GRpS6h4rG133d0J08ev7NwtKWjs7Sq1Qk6mC7KUFX8'; 
+    const API_KEY = 'AIzaSyCddRx0QVImugV72Urd9oA9gc75FVQM'; 
+
+    // ============================================================
+    // 2. FUNGSI DASAR MENGAMBIL DATA DARI SHEETS
+    // ============================================================
+    async function getSheetData(sheetName) {
+        try {
+            // Encode nama sheet agar aman dari spasi
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${API_KEY}`;
+            
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status} - Gagal mengambil sheet '${sheetName}'`);
+            }
+
+            const data = await response.json();
+            return data.values; // Kembalikan hanya isi datanya (array)
+
+        } catch (error) {
+            console.error(`Error mengambil sheet '${sheetName}':`, error.message);
+            return null; // Jika gagal, kembalikan null
+        }
+    }
+
+    // ============================================================
+    // 3. FUNGSI INISIALISASI SAAT HALAMAN DIMUAT
+    // ============================================================
+    async function loadAppData() {
+        console.log("🔄 Memuat data aplikasi...");
+
+        // 1. Ambil data settings (tahun ajaran, nama sekolah, dll)
+        const settingsData = await getSheetData('settings');
+        if (settingsData) {
+            console.log("✅ Data settings berhasil diambil:", settingsData);
+            // (Di sini nanti Anda bisa menaruh kode untuk mengubah judul halaman berdasarkan settings)
+        } else {
+            console.warn("⚠️ Sheet 'settings' kosong atau tidak ditemukan.");
+        }
+
+        // 2. Ambil data attendance atau users (data login)
+        const usersData = await getSheetData('users'); // Jika Anda punya tab bernama 'users'
+        // const usersData = await getSheetData('attendance'); // Jika tab login Anda bernama 'attendance'
+        
+        if (usersData) {
+            console.log("✅ Data users/attendance berhasil diambil:", usersData);
+        } else {
+            console.warn("⚠️ Sheet 'users/attendance' kosong atau tidak ditemukan.");
+        }
+
+        console.log("✅ Proses loading selesai.");
+    }
+
+    // ============================================================
+    // 4. JALANKAN FUNGSI SAAT HALAMAN SIAP
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', loadAppData);
+
+</script>
