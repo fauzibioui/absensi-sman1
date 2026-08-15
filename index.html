@@ -1,47 +1,63 @@
 <script>
-    // GANTI URL DI BAWAH INI DENGAN URL DEPLOY v2 ANDA
+    // ============================================================
+    // GANTI URL DI BAWAH INI DENGAN URL DEPLOY FINAL ANDA
+    // ============================================================
     const PROXY_URL = 'https://script.google.com/macros/s/AKfycbwRKtnYjVj9BWhRmQqXKv_uvC-ZeyT_E2erWlsetUrJHJFbbDNG615qjsT6hMTOt1EZ/exec';
 
-    async function getData(sheetName) {
-        try {
-            // PERHATIKAN CARA BARU INI:
-            // Kita menggunakan src (sumber) dari iframe tersembunyi untuk melewati CORS
-            const response = await fetch(`${PROXY_URL}?sheetName=${encodeURIComponent(sheetName)}`);
-            
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const result = await response.json();
-            return result; // Data dikembalikan dalam bentuk array 2 dimensi
+    // Fungsi untuk mengambil data via iframe (100% bebas CORS)
+    function ambilDataViaIframe(sheetName) {
+        return new Promise((resolve) => {
+            // Buat iframe tersembunyi
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = `${PROXY_URL}?sheetName=${encodeURIComponent(sheetName)}`;
+            document.body.appendChild(iframe);
 
-        } catch (error) {
-            console.error(`❌ Gagal mengambil data '${sheetName}':`, error.message);
-            return null; // Kembalikan null jika gagal
-        }
+            // Tangkap pesan yang dikirim oleh Apps Script
+            window.addEventListener('message', function handler(event) {
+                // Pastikan pesan berasal dari domain yang benar (opsional, tapi baik untuk keamanan)
+                if (event.data && event.data.sheetName === sheetName) {
+                    resolve(event.data.data);
+                    // Hapus iframe setelah selesai
+                    document.body.removeChild(iframe);
+                    window.removeEventListener('message', handler);
+                }
+            });
+        });
     }
 
-    async function loadApp() {
-        console.log("🔄 Memuat data aplikasi...");
-        
-        // 1. Ambil settings
-        const settings = await getData('settings');
-        if (settings && settings.length > 0) {
-            console.log("✅ Data settings:", settings);
-        } else {
-            console.warn("⚠️ Sheet 'settings' kosong atau gagal dimuat.");
+    // Fungsi utama menjalankan aplikasi
+    async function loadAppData() {
+        console.log("🔄 Memuat data aplikasi via Iframe (Anti-CORS)...");
+
+        // Ambil data settings
+        try {
+            const settings = await ambilDataViaIframe('settings');
+            if (settings && settings.length > 0) {
+                console.log("✅ Data settings:", settings);
+            } else {
+                console.warn("⚠️ Sheet 'settings' kosong.");
+            }
+        } catch (e) {
+            console.error("❌ Gagal ambil settings:", e);
         }
 
-        // 2. Ambil users (untuk login)
-        const users = await getData('users');
-        if (users && users.length > 0) {
-            console.log("✅ Data users:", users);
-            // Di sini logika login Anda diproses
-        } else {
-            console.warn("⚠️ Sheet 'users' kosong atau gagal dimuat.");
+        // Ambil data users
+        try {
+            const users = await ambilDataViaIframe('users');
+            if (users && users.length > 0) {
+                console.log("✅ Data users:", users);
+                // Di sini Anda bisa memanggil fungsi login dengan data users
+            } else {
+                console.warn("⚠️ Sheet 'users' kosong.");
+            }
+        } catch (e) {
+            console.error("❌ Gagal ambil users:", e);
         }
 
-        console.log("✅ Aplikasi siap!");
+        console.log("✅ Proses loading selesai.");
     }
 
     // Jalankan saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', loadApp);
+    document.addEventListener('DOMContentLoaded', loadAppData);
 </script>
