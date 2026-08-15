@@ -1,0 +1,53 @@
+<script>
+    // ============================================================
+    // URL WEB APP DARI GOOGLE APPS SCRIPT (SUDAH DIISI)
+    // ============================================================
+    const PROXY_URL = 'https://script.google.com/macros/s/AKfycbyReOTfv0R0ZkIA06XZrZWVMnkUUvl-8lc9DXlrFkt9HO7JL7_7xqZ0nLXI9Qw_FNt/exec';
+
+    // ============================================================
+    // FUNGSI MENGAMBIL DATA
+    // ============================================================
+    async function getData(sheetName) {
+        try {
+            const url = `${PROXY_URL}?sheetName=${encodeURIComponent(sheetName)}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Gagal mengambil data (${response.status})`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`❌ Gagal mengambil sheet '${sheetName}':`, error.message);
+            return null;
+        }
+    }
+
+    // ============================================================
+    // JALANKAN SAAT HALAMAN DIMUAT
+    // ============================================================
+    async function loadAppData() {
+        console.log("🔄 Memuat data aplikasi via Apps Script...");
+
+        // Ambil data settings
+        const settings = await getData('settings');
+        if (settings && settings.length > 0) {
+            console.log("✅ Data settings:", settings);
+        } else {
+            console.warn("⚠️ Sheet 'settings' kosong.");
+        }
+
+        // Ambil data users (untuk login)
+        const users = await getData('users');
+        if (users && users.length > 0) {
+            console.log("✅ Data users:", users);
+            // DI SINI ANDA BISA MENGHUBUNGKAN DATA KE LOGIN
+        } else {
+            console.warn("⚠️ Sheet 'users' kosong.");
+        }
+
+        console.log("✅ Proses loading selesai.");
+    }
+
+    // Jalankan saat halaman selesai dimuat
+    document.addEventListener('DOMContentLoaded', loadAppData);
+</script>
