@@ -1,53 +1,47 @@
 <script>
-    // ============================================================
-    // URL WEB APP DARI GOOGLE APPS SCRIPT (SUDAH DIISI)
-    // ============================================================
+    // GANTI URL DI BAWAH INI DENGAN URL DEPLOY v2 ANDA
     const PROXY_URL = 'https://script.google.com/macros/s/AKfycbyImthxlTu12_ilLMISg5bZV85z3nUtli9Y37e8J3vukSfqPc-ICAmJAGJ9pI-eonXX/exec';
 
-    // ============================================================
-    // FUNGSI MENGAMBIL DATA
-    // ============================================================
     async function getData(sheetName) {
         try {
-            const url = `${PROXY_URL}?sheetName=${encodeURIComponent(sheetName)}`;
-            const response = await fetch(url);
+            // PERHATIKAN CARA BARU INI:
+            // Kita menggunakan src (sumber) dari iframe tersembunyi untuk melewati CORS
+            const response = await fetch(`${PROXY_URL}?sheetName=${encodeURIComponent(sheetName)}`);
             
-            if (!response.ok) {
-                throw new Error(`Gagal mengambil data (${response.status})`);
-            }
-            return await response.json();
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const result = await response.json();
+            return result; // Data dikembalikan dalam bentuk array 2 dimensi
+
         } catch (error) {
-            console.error(`❌ Gagal mengambil sheet '${sheetName}':`, error.message);
-            return null;
+            console.error(`❌ Gagal mengambil data '${sheetName}':`, error.message);
+            return null; // Kembalikan null jika gagal
         }
     }
 
-    // ============================================================
-    // JALANKAN SAAT HALAMAN DIMUAT
-    // ============================================================
-    async function loadAppData() {
-        console.log("🔄 Memuat data aplikasi via Apps Script...");
-
-        // Ambil data settings
+    async function loadApp() {
+        console.log("🔄 Memuat data aplikasi...");
+        
+        // 1. Ambil settings
         const settings = await getData('settings');
         if (settings && settings.length > 0) {
             console.log("✅ Data settings:", settings);
         } else {
-            console.warn("⚠️ Sheet 'settings' kosong.");
+            console.warn("⚠️ Sheet 'settings' kosong atau gagal dimuat.");
         }
 
-        // Ambil data users (untuk login)
+        // 2. Ambil users (untuk login)
         const users = await getData('users');
         if (users && users.length > 0) {
             console.log("✅ Data users:", users);
-            // DI SINI ANDA BISA MENGHUBUNGKAN DATA KE LOGIN
+            // Di sini logika login Anda diproses
         } else {
-            console.warn("⚠️ Sheet 'users' kosong.");
+            console.warn("⚠️ Sheet 'users' kosong atau gagal dimuat.");
         }
 
-        console.log("✅ Proses loading selesai.");
+        console.log("✅ Aplikasi siap!");
     }
 
-    // Jalankan saat halaman selesai dimuat
-    document.addEventListener('DOMContentLoaded', loadAppData);
+    // Jalankan saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', loadApp);
 </script>
